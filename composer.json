@@ -1,7 +1,7 @@
 {
     "name": "direte/microftps",
     "description": "Micro library to deal with FTPS connections over cUrl",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "type": "library",
     "homepage": "https://github.com/direte/microftps",
     "license": "MIT",

@@ -3,6 +3,8 @@ namespace DiRete;
 
 class MicroFtps
 {
+    const ERR_CONNECT = 'Connect to the server before executing commands';
+
     const ERR_URL_EMPTY = 'FTPS server url is empty';
 
     const ERR_USER_EMPTY = 'FTPS username is empty';
@@ -17,8 +19,32 @@ class MicroFtps
 	 */
 	private $curl;
 
-	/**
+    /**
 	 * Server url
+	 * @var string
+	 */
+	private $server;
+
+    /**
+	 * Username
+	 * @var string
+	 */
+	private $username;
+
+    /**
+	 * Password
+	 * @var string
+	 */
+	private $password;
+
+    /**
+	 * Options
+	 * @var string
+	 */
+	private $opts;
+
+	/**
+	 * Server path
 	 * @var string
 	 */
 	private $url;
@@ -47,6 +73,22 @@ class MicroFtps
 	 */
     public $responseInfo = array();
 
+    /**
+	 * Constructor
+	 *
+	 * @param string $server Server url
+	 * @param string $username Username
+	 * @param string $password Password
+	 * @param array $opts Options
+	 */
+	public function __construct($server, $username, $password = '', $opts = array())
+    {
+        // Connect if possible
+        if($server && $username){
+            $this->connect($server, $username, $password, $opts);
+        }
+    }
+
 	/**
 	 * Connect to FTP server over SSL/TLS
 	 *
@@ -55,7 +97,7 @@ class MicroFtps
 	 * @param string $password Password
 	 * @param array $opts Options
 	 */
-	public function __construct($server, $username, $password, $opts = array())
+	public function connect($server, $username, $password, $opts = array())
     {
         if (!$server) {
 			throw new \Exception(self::ERR_URL_EMPTY);
@@ -64,6 +106,11 @@ class MicroFtps
 		if (!$username) {
 			throw new \Exception(self::ERR_USER_EMPTY);
         }
+
+        $this->server = $server;
+        $this->username = $username;
+        $this->password = $password;
+        $this->opts = $opts;
 
         $defaultOpts = array(
             'passive' => true,
@@ -120,6 +167,7 @@ class MicroFtps
     */
     public function read($filepath)
     {
+        $this->init();
         $path = $this->url.$filepath;
         curl_setopt($this->curl, CURLOPT_URL, $path);
         curl_setopt($this->curl, CURLOPT_RETURNTRANSFER, 1);
@@ -134,6 +182,7 @@ class MicroFtps
     */
     public function listDir($dir)
     {
+        $this->init();
         $path = $this->url.$dir;
         curl_setopt( $this->curl, CURLOPT_URL, $path);
         curl_setopt( $this->curl,CURLOPT_FTPLISTONLY, 1);
@@ -151,6 +200,7 @@ class MicroFtps
 	 */
 	public function write($rFilename, $lFilename)
     {
+        $this->init();
         $path = $this->url.$rFilename;
 		// Manage stream
 		$stream = fopen('php://temp', 'w+');
@@ -177,11 +227,23 @@ class MicroFtps
     */
     public function delete($rFilename)
     {
+        $this->init();
         $path = $this->url.$rFilename;
         curl_setopt( $this->curl, CURLOPT_URL, $this->url);
         curl_setopt( $this->curl, CURLOPT_QUOTE, array('DELE '.$path));
         curl_setopt( $this->curl, CURLOPT_RETURNTRANSFER, 1);
         return $this->exec($this->curl);
+    }
+
+    /**
+     * Init connection
+     */
+    private function init()
+    {
+        if(!$this->server && !$this->username){
+            throw new \Exception(self::ERR_CONNECT);
+        }
+        $this->connect($this->server, $this->username, $this->password, $this->opts);
     }
 
     /**
@@ -197,7 +259,7 @@ class MicroFtps
         if (!$result) {
             throw new \Exception(curl_error($curl));
         }
-
+        curl_close($curl);
         return $result;
     }
 

@@ -27,12 +27,16 @@ $someOpts = array(
   )
 );
 
-$mf = new \DiRete\MicroFtps('ftps.server.com', 'username', 'pass', $someOpts);
+$mf = new \DiRete\MicroFtps();
+$mf->connect('ftps.server.com', 'username', 'pass', $someOpts);
+// Or $mf = new \DiRete\MicroFtps('ftps.server.com', 'username', 'pass', $someOpts);
 $fileContent = $mf->read('/path/to/my/file.txt');
 ```
 
 
 ## API (quick overview)
+
+* connect($server, $username, $password, $options)
 
 * read($filepath)
 
